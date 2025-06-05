@@ -1,12 +1,13 @@
 # 🎛️ Interactive Filter Visualizer
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-blue?style=for-the-badge)](https://your-username.github.io/interactive-filter-visualizer)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-blue?style=for-the-badge)](https://imjeasung.github.io/interactive-filter-visualizer)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-brightgreen?style=for-the-badge&logo=javascript)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 
 **다양한 필터의 동작을 실시간으로 시각화하고 비교할 수 있는 인터랙티브 웹 애플리케이션**
 
-![Filter Visualizer Demo](https://via.placeholder.com/800x400/667eea/ffffff?text=Filter+Visualizer+Demo)
+![image](https://github.com/user-attachments/assets/8a7905d7-7961-4ec1-8fa2-a4fe8e3acae1)
+
 
 ## ✨ 주요 기능
 
@@ -41,12 +42,12 @@
 ## 🚀 빠른 시작
 
 ### 온라인 데모
-👉 **[GitHub Pages에서 바로 체험하기](https://your-username.github.io/interactive-filter-visualizer)**
+👉 **[GitHub Pages에서 바로 체험하기](https://imjeasung.github.io/interactive-filter-visualizer)**
 
 ### 로컬 실행
 ```bash
 # 저장소 클론
-git clone https://github.com/your-username/interactive-filter-visualizer.git
+git clone https://github.com/imjeasung/interactive-filter-visualizer.git
 
 # 폴더 이동
 cd interactive-filter-visualizer
