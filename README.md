@@ -22,12 +22,14 @@
    - 노이즈 제거에 효과적
 
 2. **로우패스 필터 (Low-pass)**
-   - 1차 IIR 필터
+   - 1차 RC 필터 (IIR 구현)
    - 컷오프 주파수 조정 (1~25Hz)
+   - 고주파 성분 제거
 
 3. **하이패스 필터 (High-pass)**
-   - 1차 IIR 필터
+   - 1차 RC 필터 (IIR 구현)
    - 컷오프 주파수 조정 (0.5~10Hz)
+   - 저주파/DC 성분 제거
 
 4. **칼만 필터 (Kalman Filter)**
    - 1차원 상태 추정
@@ -52,13 +54,7 @@ git clone https://github.com/imjeasung/interactive-filter-visualizer.git
 # 폴더 이동
 cd interactive-filter-visualizer
 
-# 로컬 서버 실행 (Python 3)
-python -m http.server 8000
-
-# 또는 Node.js 사용
-npx http-server
-
-# 브라우저에서 http://localhost:8000 접속
+# index.html 클릭
 ```
 
 ## 📁 프로젝트 구조
@@ -119,7 +115,7 @@ interactive-filter-visualizer/
 
 ### 핵심 알고리즘
 - **이동평균**: 링 버퍼 기반 효율적 구현
-- **IIR 필터**: 1차 버터워스 필터
+- **RC 필터**: 1차 아날로그 RC 회로의 디지털 구현
 - **칼만 필터**: 1차원 상태공간 모델
 
 ## 📈 성능 최적화
