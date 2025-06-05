@@ -1,0 +1,1525 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>필터 시각화 도구</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .filter-tabs {
+            display: flex;
+            background: white;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px 20px;
+            text-align: center;
+            background: transparent;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab:hover:not(.active) {
+            background: #f0f0f0;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 300px;
+            gap: 20px;
+            align-items: start;
+        }
+
+        .visualization-area {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 810px;
+        }
+
+        .canvas-container {
+            margin-bottom: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .canvas-container:last-child {
+            margin-bottom: 0;
+        }
+
+        .canvas-label {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #555;
+        }
+
+        canvas {
+            width: 100%;
+            height: 260px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            display: block;
+        }
+
+        .controls-panel {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            min-height: 750px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .control-section {
+            margin-bottom: 25px;
+        }
+
+        .control-section h3 {
+            margin-bottom: 15px;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+        }
+
+        .value-display {
+            min-width: 60px;
+            text-align: center;
+            background: #f8f9fa;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd8;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .status-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: auto;
+            border-left: 4px solid #667eea;
+        }
+
+        .status-info h4 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        .status-item:last-child {
+            margin-bottom: 0;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .filter-tabs {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .visualization-area,
+            .controls-panel {
+                min-height: auto;
+            }
+            
+            canvas {
+                height: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎛️ 필터 시각화 도구</h1>
+            <p>다양한 필터의 동작을 실시간으로 체험해보세요</p>
+        </div>
+
+        <div class="filter-tabs">
+            <button class="tab active" data-filter="moving-average">이동평균</button>
+            <button class="tab" data-filter="lowpass">로우패스</button>
+            <button class="tab" data-filter="highpass">하이패스</button>
+            <button class="tab" data-filter="kalman">칼만필터</button>
+        </div>
+
+        <div class="main-content">
+            <div class="visualization-area">
+                <div class="canvas-container">
+                    <div class="canvas-label">📈 원본 신호</div>
+                    <canvas id="original-canvas" width="800" height="260"></canvas>
+                </div>
+                
+                <div class="canvas-container">
+                    <div class="canvas-label">🔧 필터링된 신호</div>
+                    <canvas id="filtered-canvas" width="800" height="260"></canvas>
+                </div>
+            </div>
+
+            <div class="controls-panel">
+                <div class="control-section">
+                    <h3>🎵 신호 생성</h3>
+                    
+                    <div class="control-group">
+                        <label>신호 타입</label>
+                        <select id="signal-type" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value="sine">사인파</option>
+                            <option value="square">사각파</option>
+                            <option value="triangle">삼각파</option>
+                            <option value="noise">노이즈</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label>주파수 (Hz)</label>
+                        <div class="slider-container">
+                            <input type="range" id="frequency" min="1" max="50" value="5" step="1">
+                            <div class="value-display" id="frequency-value">5</div>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label>진폭</label>
+                        <div class="slider-container">
+                            <input type="range" id="amplitude" min="0.1" max="2" value="1" step="0.1">
+                            <div class="value-display" id="amplitude-value">1.0</div>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label>노이즈 레벨</label>
+                        <div class="slider-container">
+                            <input type="range" id="noise-level" min="0" max="0.5" value="0.1" step="0.01">
+                            <div class="value-display" id="noise-value">0.10</div>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label>⚡ 재생 속도</label>
+                        <div class="slider-container">
+                            <input type="range" id="speed-control" min="0.1" max="3" value="1" step="0.1">
+                            <div class="value-display" id="speed-value">1.0x</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-section" id="filter-controls">
+                    <h3>⚙️ 이동평균 필터</h3>
+                    
+                    <div class="control-group">
+                        <label>윈도우 크기</label>
+                        <div class="slider-container">
+                            <input type="range" id="window-size" min="3" max="50" value="10" step="1">
+                            <div class="value-display" id="window-value">10</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-primary" id="play-pause">▶️ 시작</button>
+                    <button class="btn-secondary" id="reset">🔄 리셋</button>
+                </div>
+
+                <div class="status-info">
+                    <h4>📊 핵심 분석</h4>
+                    <div class="status-item">
+                        <span>🎯 노이즈 제거 효과:</span>
+                        <span id="noise-reduction">0%</span>
+                    </div>
+                    <div class="status-item">
+                        <span>📏 신호 부드러움:</span>
+                        <span id="smoothness-level">0%</span>
+                    </div>
+                    <div class="status-item">
+                        <span>⏱️ 경과 시간:</span>
+                        <span id="current-time">0.0 초</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // signal-generator.js - 다양한 신호를 생성하는 클래스
+
+        class SignalGenerator {
+            constructor() {
+                this.sampleRate = 100;
+                this.time = 0;
+                this.timeStep = 1 / this.sampleRate;
+            }
+
+            generateSine(frequency, amplitude = 1, phase = 0) {
+                return amplitude * Math.sin(2 * Math.PI * frequency * this.time + phase);
+            }
+
+            generateSquare(frequency, amplitude = 1) {
+                const sineValue = Math.sin(2 * Math.PI * frequency * this.time);
+                return amplitude * (sineValue >= 0 ? 1 : -1);
+            }
+
+            generateTriangle(frequency, amplitude = 1) {
+                const period = 1 / frequency;
+                const timeInPeriod = this.time % period;
+                const normalizedTime = timeInPeriod / period;
+                
+                let triangleValue;
+                if (normalizedTime < 0.5) {
+                    triangleValue = 2 * normalizedTime;
+                } else {
+                    triangleValue = 2 * (1 - normalizedTime);
+                }
+                
+                return amplitude * (2 * triangleValue - 1);
+            }
+
+            generateNoise(amplitude = 1) {
+                let u1 = Math.random();
+                let u2 = Math.random();
+                
+                while (u1 === 0) u1 = Math.random();
+                
+                const z0 = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+                return amplitude * z0;
+            }
+
+            generateSignal(signalType, frequency, amplitude = 1, noiseLevel = 0) {
+                let baseSignal = 0;
+
+                switch (signalType) {
+                    case 'sine':
+                        baseSignal = this.generateSine(frequency, amplitude);
+                        break;
+                    case 'square':
+                        baseSignal = this.generateSquare(frequency, amplitude);
+                        break;
+                    case 'triangle':
+                        baseSignal = this.generateTriangle(frequency, amplitude);
+                        break;
+                    case 'noise':
+                        baseSignal = this.generateNoise(amplitude);
+                        break;
+                    default:
+                        baseSignal = this.generateSine(frequency, amplitude);
+                }
+
+                const noise = this.generateNoise(noiseLevel);
+                return baseSignal + noise;
+            }
+
+            step() {
+                this.time += this.timeStep;
+            }
+
+            reset() {
+                this.time = 0;
+            }
+
+            getCurrentTime() {
+                return this.time;
+            }
+
+            setSampleRate(sampleRate) {
+                this.sampleRate = sampleRate;
+                this.timeStep = 1 / sampleRate;
+            }
+
+            static calculateRMS(signalArray) {
+                if (signalArray.length === 0) return 0;
+                
+                const sumOfSquares = signalArray.reduce((sum, value) => sum + value * value, 0);
+                return Math.sqrt(sumOfSquares / signalArray.length);
+            }
+        }
+
+        // canvas-visualizer.js - 캔버스에 실시간 신호를 그리는 클래스
+
+        class CanvasVisualizer {
+            constructor(canvasId, options = {}) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d');
+                
+                this.options = {
+                    backgroundColor: '#ffffff',
+                    gridColor: '#f0f0f0',
+                    axisColor: '#cccccc',
+                    signalColor: '#667eea',
+                    signalWidth: 2,
+                    gridLines: true,
+                    showAxis: true,
+                    autoScale: true,
+                    yMin: -2,
+                    yMax: 2,
+                    ...options
+                };
+
+                this.data = [];
+                this.maxDataPoints = 500;
+                this.timeWindow = 4;
+                
+                this.setupCanvas();
+                this.clear();
+            }
+
+            setupCanvas() {
+                const rect = this.canvas.getBoundingClientRect();
+                const dpr = window.devicePixelRatio || 1;
+                
+                this.canvas.width = rect.width * dpr;
+                this.canvas.height = rect.height * dpr;
+                
+                this.canvas.style.width = rect.width + 'px';
+                this.canvas.style.height = rect.height + 'px';
+                
+                this.ctx.scale(dpr, dpr);
+                
+                this.width = rect.width;
+                this.height = rect.height;
+            }
+
+            clear() {
+                this.ctx.fillStyle = this.options.backgroundColor;
+                this.ctx.fillRect(0, 0, this.width, this.height);
+                
+                if (this.options.gridLines) {
+                    this.drawGrid();
+                }
+                
+                if (this.options.showAxis) {
+                    this.drawAxis();
+                }
+            }
+
+            drawGrid() {
+                this.ctx.strokeStyle = this.options.gridColor;
+                this.ctx.lineWidth = 0.5;
+                this.ctx.setLineDash([2, 2]);
+
+                const gridSpacing = 40;
+
+                this.ctx.beginPath();
+                
+                for (let x = 0; x <= this.width; x += gridSpacing) {
+                    this.ctx.moveTo(x, 0);
+                    this.ctx.lineTo(x, this.height);
+                }
+                
+                for (let y = 0; y <= this.height; y += gridSpacing) {
+                    this.ctx.moveTo(0, y);
+                    this.ctx.lineTo(this.width, y);
+                }
+                
+                this.ctx.stroke();
+                this.ctx.setLineDash([]);
+            }
+
+            drawAxis() {
+                this.ctx.strokeStyle = this.options.axisColor;
+                this.ctx.lineWidth = 1;
+
+                const centerY = this.height / 2;
+
+                this.ctx.beginPath();
+                
+                this.ctx.moveTo(0, centerY);
+                this.ctx.lineTo(this.width, centerY);
+                
+                this.ctx.moveTo(40, 0);
+                this.ctx.lineTo(40, this.height);
+                
+                this.ctx.stroke();
+
+                this.drawAxisLabels();
+            }
+
+            drawAxisLabels() {
+                this.ctx.fillStyle = '#666';
+                this.ctx.font = '10px Arial';
+                this.ctx.textAlign = 'center';
+
+                const centerY = this.height / 2;
+                
+                this.ctx.textAlign = 'right';
+                this.ctx.fillText(this.options.yMax.toFixed(1), 35, 15);
+                this.ctx.fillText('0', 35, centerY + 4);
+                this.ctx.fillText(this.options.yMin.toFixed(1), 35, this.height - 5);
+                
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('Time (s)', this.width / 2, this.height - 5);
+            }
+
+            addDataPoint(value, time) {
+                this.data.push({ value, time });
+                
+                if (this.data.length > this.maxDataPoints) {
+                    this.data.shift();
+                }
+                
+                if (this.options.autoScale && this.data.length > 10) {
+                    this.updateScale();
+                }
+            }
+
+            updateScale() {
+                const values = this.data.map(d => d.value);
+                const max = Math.max(...values);
+                const min = Math.min(...values);
+                
+                const range = max - min;
+                const margin = range * 0.2;
+                
+                this.options.yMax = max + margin;
+                this.options.yMin = min - margin;
+                
+                if (range < 0.1) {
+                    this.options.yMax = 1;
+                    this.options.yMin = -1;
+                }
+            }
+
+            drawSignal() {
+                if (this.data.length < 2) return;
+
+                this.ctx.strokeStyle = this.options.signalColor;
+                this.ctx.lineWidth = this.options.signalWidth;
+                this.ctx.setLineDash([]);
+
+                this.ctx.beginPath();
+
+                const latestTime = this.data[this.data.length - 1].time;
+                let earliestTime;
+                
+                if (this.data.length < this.maxDataPoints * 0.8) {
+                    earliestTime = this.data[0].time;
+                } else {
+                    earliestTime = latestTime - this.timeWindow;
+                }
+
+                let firstPoint = true;
+
+                for (let i = 0; i < this.data.length; i++) {
+                    const point = this.data[i];
+                    
+                    if (point.time < earliestTime) continue;
+
+                    const x = this.timeToX(point.time, earliestTime, latestTime);
+                    const y = this.valueToY(point.value);
+
+                    if (firstPoint) {
+                        this.ctx.moveTo(x, y);
+                        firstPoint = false;
+                    } else {
+                        this.ctx.lineTo(x, y);
+                    }
+                }
+
+                this.ctx.stroke();
+            }
+
+            timeToX(time, earliestTime, latestTime) {
+                const timeRange = latestTime - earliestTime;
+                const normalizedTime = (time - earliestTime) / timeRange;
+                return 50 + normalizedTime * (this.width - 60);
+            }
+
+            valueToY(value) {
+                const range = this.options.yMax - this.options.yMin;
+                const normalizedValue = (value - this.options.yMin) / range;
+                return this.height - (normalizedValue * this.height);
+            }
+
+            update() {
+                this.clear();
+                this.drawSignal();
+            }
+
+            updateRealtime(value, time) {
+                this.addDataPoint(value, time);
+                this.update();
+            }
+
+            clearData() {
+                this.data = [];
+                this.clear();
+            }
+
+            resize() {
+                this.setupCanvas();
+                this.update();
+            }
+
+            getStatistics() {
+                if (this.data.length === 0) {
+                    return { rms: 0, mean: 0, std: 0, min: 0, max: 0 };
+                }
+
+                const values = this.data.map(d => d.value);
+                const sum = values.reduce((a, b) => a + b, 0);
+                const mean = sum / values.length;
+                
+                const variance = values.reduce((a, b) => a + (b - mean) ** 2, 0) / values.length;
+                const std = Math.sqrt(variance);
+                
+                const sumOfSquares = values.reduce((a, b) => a + b * b, 0);
+                const rms = Math.sqrt(sumOfSquares / values.length);
+                
+                const min = Math.min(...values);
+                const max = Math.max(...values);
+
+                return { rms, mean, std, min, max };
+            }
+        }
+
+        // lowpass-filter.js - 1차 IIR 로우패스 필터 구현
+
+        class LowpassFilter {
+            constructor(cutoffFrequency = 5, sampleRate = 100) {
+                this.cutoffFrequency = cutoffFrequency;
+                this.sampleRate = sampleRate;
+                this.previousOutput = 0;
+                this.alpha = this.calculateAlpha();
+                this.isInitialized = false;
+            }
+
+            calculateAlpha() {
+                const dt = 1 / this.sampleRate;
+                const rc = 1 / (2 * Math.PI * this.cutoffFrequency);
+                return dt / (rc + dt);
+            }
+
+            filter(input) {
+                if (!this.isInitialized) {
+                    this.previousOutput = input;
+                    this.isInitialized = true;
+                    return input;
+                }
+
+                const output = this.alpha * input + (1 - this.alpha) * this.previousOutput;
+                this.previousOutput = output;
+                return output;
+            }
+
+            setCutoffFrequency(newCutoffFrequency) {
+                if (newCutoffFrequency <= 0) {
+                    throw new Error('컷오프 주파수는 0보다 커야 합니다.');
+                }
+                
+                if (newCutoffFrequency >= this.sampleRate / 2) {
+                    newCutoffFrequency = this.sampleRate / 2 - 1;
+                }
+                
+                this.cutoffFrequency = newCutoffFrequency;
+                this.alpha = this.calculateAlpha();
+            }
+
+            setSampleRate(newSampleRate) {
+                this.sampleRate = newSampleRate;
+                this.alpha = this.calculateAlpha();
+            }
+
+            reset() {
+                this.previousOutput = 0;
+                this.isInitialized = false;
+            }
+
+            getInfo() {
+                return {
+                    type: 'Lowpass Filter (1st Order IIR)',
+                    cutoffFrequency: this.cutoffFrequency,
+                    sampleRate: this.sampleRate,
+                    alpha: this.alpha
+                };
+            }
+        }
+
+        // highpass-filter.js - 1차 IIR 하이패스 필터 구현
+
+        class HighpassFilter {
+            constructor(cutoffFrequency = 5, sampleRate = 100) {
+                this.cutoffFrequency = cutoffFrequency;
+                this.sampleRate = sampleRate;
+                this.previousInput = 0;
+                this.previousOutput = 0;
+                this.alpha = this.calculateAlpha();
+                this.isInitialized = false;
+            }
+
+            calculateAlpha() {
+                const dt = 1 / this.sampleRate;
+                const rc = 1 / (2 * Math.PI * this.cutoffFrequency);
+                return rc / (rc + dt);
+            }
+
+            filter(input) {
+                if (!this.isInitialized) {
+                    this.previousInput = input;
+                    this.previousOutput = 0;
+                    this.isInitialized = true;
+                    return 0;
+                }
+
+                const output = this.alpha * (this.previousOutput + input - this.previousInput);
+                
+                this.previousInput = input;
+                this.previousOutput = output;
+                
+                return output;
+            }
+
+            setCutoffFrequency(newCutoffFrequency) {
+                if (newCutoffFrequency <= 0) {
+                    throw new Error('컷오프 주파수는 0보다 커야 합니다.');
+                }
+                
+                if (newCutoffFrequency >= this.sampleRate / 2) {
+                    newCutoffFrequency = this.sampleRate / 2 - 1;
+                }
+                
+                this.cutoffFrequency = newCutoffFrequency;
+                this.alpha = this.calculateAlpha();
+            }
+
+            setSampleRate(newSampleRate) {
+                this.sampleRate = newSampleRate;
+                this.alpha = this.calculateAlpha();
+            }
+
+            reset() {
+                this.previousInput = 0;
+                this.previousOutput = 0;
+                this.isInitialized = false;
+            }
+
+            getInfo() {
+                return {
+                    type: 'Highpass Filter (1st Order IIR)',
+                    cutoffFrequency: this.cutoffFrequency,
+                    sampleRate: this.sampleRate,
+                    alpha: this.alpha
+                };
+            }
+        }
+
+        // kalman-filter.js - 1차원 칼만 필터 구현
+
+        class KalmanFilter {
+            constructor(processNoise = 0.01, measurementNoise = 0.1, dt = 0.01) {
+                this.processNoise = processNoise;
+                this.measurementNoise = measurementNoise;
+                this.dt = dt;
+                
+                this.state = [0, 0]; // [위치, 속도]
+                this.P = [[1, 0], [0, 1]]; // 오차 공분산 행렬
+                this.F = [[1, this.dt], [0, 1]]; // 상태 전이 행렬
+                this.H = [1, 0]; // 관측 행렬
+                this.R = this.measurementNoise; // 측정 노이즈
+                
+                this.updateQ();
+                this.isInitialized = false;
+            }
+
+            updateQ() {
+                this.Q = [
+                    [this.processNoise * Math.pow(this.dt, 4) / 4, this.processNoise * Math.pow(this.dt, 3) / 2],
+                    [this.processNoise * Math.pow(this.dt, 3) / 2, this.processNoise * Math.pow(this.dt, 2)]
+                ];
+            }
+
+            multiplyMatrixVector(matrix, vector) {
+                return [
+                    matrix[0][0] * vector[0] + matrix[0][1] * vector[1],
+                    matrix[1][0] * vector[0] + matrix[1][1] * vector[1]
+                ];
+            }
+
+            multiplyMatrix(A, B) {
+                return [
+                    [A[0][0] * B[0][0] + A[0][1] * B[1][0], A[0][0] * B[0][1] + A[0][1] * B[1][1]],
+                    [A[1][0] * B[0][0] + A[1][1] * B[1][0], A[1][0] * B[0][1] + A[1][1] * B[1][1]]
+                ];
+            }
+
+            addMatrix(A, B) {
+                return [
+                    [A[0][0] + B[0][0], A[0][1] + B[0][1]],
+                    [A[1][0] + B[1][0], A[1][1] + B[1][1]]
+                ];
+            }
+
+            transpose(matrix) {
+                return [
+                    [matrix[0][0], matrix[1][0]],
+                    [matrix[0][1], matrix[1][1]]
+                ];
+            }
+
+            predict() {
+                this.state = this.multiplyMatrixVector(this.F, this.state);
+                const FT = this.transpose(this.F);
+                const FP = this.multiplyMatrix(this.F, this.P);
+                const FPFT = this.multiplyMatrix(FP, FT);
+                this.P = this.addMatrix(FPFT, this.Q);
+            }
+
+            update(measurement) {
+                const Hx = this.H[0] * this.state[0] + this.H[1] * this.state[1];
+                const y = measurement - Hx;
+                
+                const HP = [
+                    this.H[0] * this.P[0][0] + this.H[1] * this.P[1][0],
+                    this.H[0] * this.P[0][1] + this.H[1] * this.P[1][1]
+                ];
+                const S = HP[0] * this.H[0] + HP[1] * this.H[1] + this.R;
+                
+                if (Math.abs(S) < 1e-10) return;
+                
+                const PH = [this.P[0][0] * this.H[0] + this.P[0][1] * this.H[1],
+                           this.P[1][0] * this.H[0] + this.P[1][1] * this.H[1]];
+                const K = [PH[0] / S, PH[1] / S];
+                
+                this.state[0] += K[0] * y;
+                this.state[1] += K[1] * y;
+                
+                const KH = [
+                    [K[0] * this.H[0], K[0] * this.H[1]],
+                    [K[1] * this.H[0], K[1] * this.H[1]]
+                ];
+                const I_KH = [
+                    [1 - KH[0][0], -KH[0][1]],
+                    [-KH[1][0], 1 - KH[1][1]]
+                ];
+                this.P = this.multiplyMatrix(I_KH, this.P);
+            }
+
+            filter(measurement) {
+                if (!this.isInitialized) {
+                    this.state[0] = measurement;
+                    this.state[1] = 0;
+                    this.isInitialized = true;
+                    return measurement;
+                }
+
+                this.predict();
+                this.update(measurement);
+                return this.state[0];
+            }
+
+            setProcessNoise(processNoise) {
+                this.processNoise = processNoise;
+                this.updateQ();
+            }
+
+            setMeasurementNoise(measurementNoise) {
+                this.measurementNoise = measurementNoise;
+                this.R = measurementNoise;
+            }
+
+            reset() {
+                this.state = [0, 0];
+                this.P = [[1, 0], [0, 1]];
+                this.isInitialized = false;
+            }
+
+            getInfo() {
+                return {
+                    type: 'Kalman Filter (1D)',
+                    processNoise: this.processNoise,
+                    measurementNoise: this.measurementNoise,
+                    state: [...this.state]
+                };
+            }
+        }
+
+        // moving-average-filter.js - 이동평균 필터 구현
+
+        class MovingAverageFilter {
+            constructor(windowSize = 10) {
+                this.windowSize = windowSize;
+                this.buffer = [];
+                this.bufferIndex = 0;
+                this.bufferFull = false;
+                this.sum = 0;
+                
+                this.buffer = new Array(windowSize).fill(0);
+            }
+
+            filter(input) {
+                this.sum -= this.buffer[this.bufferIndex];
+                this.buffer[this.bufferIndex] = input;
+                this.sum += input;
+                
+                this.bufferIndex = (this.bufferIndex + 1) % this.windowSize;
+                
+                if (!this.bufferFull && this.bufferIndex === 0) {
+                    this.bufferFull = true;
+                }
+                
+                const currentSize = this.bufferFull ? this.windowSize : this.bufferIndex || this.windowSize;
+                return this.sum / currentSize;
+            }
+
+            setWindowSize(newWindowSize) {
+                if (newWindowSize < 1) {
+                    throw new Error('윈도우 크기는 1 이상이어야 합니다.');
+                }
+                
+                const oldData = this.getCurrentData();
+                
+                this.windowSize = newWindowSize;
+                this.buffer = new Array(newWindowSize).fill(0);
+                this.bufferIndex = 0;
+                this.bufferFull = false;
+                this.sum = 0;
+                
+                if (oldData.length > 0) {
+                    const startIndex = Math.max(0, oldData.length - newWindowSize);
+                    for (let i = startIndex; i < oldData.length; i++) {
+                        this.filter(oldData[i]);
+                    }
+                }
+            }
+
+            getCurrentData() {
+                if (!this.bufferFull) {
+                    return this.buffer.slice(0, this.bufferIndex);
+                }
+                
+                const result = [];
+                for (let i = 0; i < this.windowSize; i++) {
+                    const index = (this.bufferIndex + i) % this.windowSize;
+                    result.push(this.buffer[index]);
+                }
+                return result;
+            }
+
+            reset() {
+                this.buffer.fill(0);
+                this.bufferIndex = 0;
+                this.bufferFull = false;
+                this.sum = 0;
+            }
+        }
+
+        // main-app.js - 메인 애플리케이션 로직
+
+        class FilterVisualizerApp {
+            constructor() {
+                this.isPlaying = false;
+                this.animationId = null;
+                this.currentFilter = 'moving-average';
+                
+                this.signalGenerator = null;
+                this.originalVisualizer = null;
+                this.filteredVisualizer = null;
+                this.filter = null;
+                
+                this.settings = {
+                    signalType: 'sine',
+                    frequency: 5,
+                    amplitude: 1,
+                    noiseLevel: 0.1,
+                    windowSize: 10,
+                    cutoffFrequency: 5,
+                    processNoise: 0.01,
+                    measurementNoise: 0.1,
+                    speed: 1.0
+                };
+                
+                this.statistics = {
+                    originalRMS: 0,
+                    filteredRMS: 0,
+                    noiseReduction: 0,
+                    smoothness: 0
+                };
+                
+                this.init();
+            }
+
+            init() {
+                console.log('🎛️ 필터 시각화 도구 초기화 중...');
+                
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', () => this.setup());
+                } else {
+                    this.setup();
+                }
+            }
+
+            setup() {
+                try {
+                    this.createInstances();
+                    this.setupEventListeners();
+                    this.updateUI();
+                    console.log('✅ 초기화 완료!');
+                } catch (error) {
+                    console.error('❌ 초기화 실패:', error);
+                }
+            }
+
+            createFilter() {
+                switch(this.currentFilter) {
+                    case 'moving-average':
+                        this.filter = new MovingAverageFilter(this.settings.windowSize);
+                        break;
+                    case 'lowpass':
+                        this.filter = new LowpassFilter(this.settings.cutoffFrequency, this.signalGenerator.sampleRate);
+                        break;
+                    case 'highpass':
+                        this.filter = new HighpassFilter(this.settings.cutoffFrequency, this.signalGenerator.sampleRate);
+                        break;
+                    case 'kalman':
+                        this.filter = new KalmanFilter(this.settings.processNoise, this.settings.measurementNoise, 0.01);
+                        break;
+                    default:
+                        this.filter = new MovingAverageFilter(this.settings.windowSize);
+                }
+            }
+
+            createInstances() {
+                this.signalGenerator = new SignalGenerator();
+                
+                this.originalVisualizer = new CanvasVisualizer('original-canvas', {
+                    signalColor: '#2196F3',
+                    backgroundColor: '#fafafa'
+                });
+                
+                this.filteredVisualizer = new CanvasVisualizer('filtered-canvas', {
+                    signalColor: '#4CAF50',
+                    backgroundColor: '#fafafa'
+                });
+                
+                this.createFilter();
+                
+                window.originalVisualizer = this.originalVisualizer;
+                window.filteredVisualizer = this.filteredVisualizer;
+                
+                console.log('📦 컴포넌트 인스턴스 생성 완료');
+            }
+
+            setupEventListeners() {
+                this.getElementById('signal-type').addEventListener('change', (e) => {
+                    this.settings.signalType = e.target.value;
+                });
+
+                this.getElementById('frequency').addEventListener('input', (e) => {
+                    this.settings.frequency = parseFloat(e.target.value);
+                    this.updateValueDisplay('frequency-value', e.target.value);
+                });
+
+                this.getElementById('amplitude').addEventListener('input', (e) => {
+                    this.settings.amplitude = parseFloat(e.target.value);
+                    this.updateValueDisplay('amplitude-value', e.target.value);
+                });
+
+                this.getElementById('noise-level').addEventListener('input', (e) => {
+                    this.settings.noiseLevel = parseFloat(e.target.value);
+                    this.updateValueDisplay('noise-value', e.target.value);
+                });
+
+                this.getElementById('speed-control').addEventListener('input', (e) => {
+                    this.settings.speed = parseFloat(e.target.value);
+                    this.updateValueDisplay('speed-value', e.target.value + 'x');
+                });
+
+                this.getElementById('play-pause').addEventListener('click', () => {
+                    this.togglePlayPause();
+                });
+
+                this.getElementById('reset').addEventListener('click', () => {
+                    this.reset();
+                });
+
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.addEventListener('click', (e) => {
+                        const filterType = e.target.dataset.filter;
+                        this.switchFilter(filterType);
+                    });
+                });
+
+                console.log('🎮 이벤트 리스너 설정 완료');
+            }
+
+            getElementById(id) {
+                const element = document.getElementById(id);
+                if (!element) {
+                    throw new Error(`Element with id "${id}" not found`);
+                }
+                return element;
+            }
+
+            updateValueDisplay(elementId, value) {
+                const element = document.getElementById(elementId);
+                if (element) {
+                    if (elementId.includes('noise')) {
+                        element.textContent = parseFloat(value).toFixed(2);
+                    } else if (elementId.includes('amplitude')) {
+                        element.textContent = parseFloat(value).toFixed(1);
+                    } else if (elementId.includes('speed')) {
+                        element.textContent = value;
+                    } else {
+                        element.textContent = value;
+                    }
+                }
+            }
+
+            togglePlayPause() {
+                if (this.isPlaying) {
+                    this.stop();
+                } else {
+                    this.start();
+                }
+            }
+
+            start() {
+                this.isPlaying = true;
+                this.getElementById('play-pause').innerHTML = '⏸️ 정지';
+                this.animate();
+                console.log('▶️ 시뮬레이션 시작');
+            }
+
+            stop() {
+                this.isPlaying = false;
+                this.getElementById('play-pause').innerHTML = '▶️ 시작';
+                if (this.animationId) {
+                    cancelAnimationFrame(this.animationId);
+                    this.animationId = null;
+                }
+                this.frameCounter = 0;
+                console.log('⏸️ 시뮬레이션 정지');
+            }
+
+            reset() {
+                this.stop();
+                
+                if (this.signalGenerator) {
+                    this.signalGenerator.reset();
+                }
+                if (this.filter) {
+                    this.filter.reset();
+                }
+                if (this.originalVisualizer) {
+                    this.originalVisualizer.clearData();
+                }
+                if (this.filteredVisualizer) {
+                    this.filteredVisualizer.clearData();
+                }
+                
+                this.statistics = {
+                    originalRMS: 0,
+                    filteredRMS: 0,
+                    noiseReduction: 0,
+                    smoothness: 0
+                };
+                this.updateStatistics();
+                
+                console.log('🔄 리셋 완료');
+            }
+
+            animate() {
+                if (!this.isPlaying) return;
+
+                try {
+                    const speedMultiplier = this.settings.speed;
+                    let steps;
+                    
+                    if (speedMultiplier <= 0.5) {
+                        this.frameCounter = (this.frameCounter || 0) + 1;
+                        if (this.frameCounter < Math.round(1 / speedMultiplier)) {
+                            this.animationId = requestAnimationFrame(() => this.animate());
+                            return;
+                        }
+                        this.frameCounter = 0;
+                        steps = 1;
+                    } else {
+                        steps = Math.round(speedMultiplier);
+                    }
+                    
+                    for (let step = 0; step < steps; step++) {
+                        const originalSignal = this.signalGenerator.generateSignal(
+                            this.settings.signalType,
+                            this.settings.frequency,
+                            this.settings.amplitude,
+                            this.settings.noiseLevel
+                        );
+
+                        const filteredSignal = this.filter.filter(originalSignal);
+                        const currentTime = this.signalGenerator.getCurrentTime();
+
+                        if (step === steps - 1) {
+                            this.originalVisualizer.updateRealtime(originalSignal, currentTime);
+                            this.filteredVisualizer.updateRealtime(filteredSignal, currentTime);
+                        }
+
+                        this.signalGenerator.step();
+                    }
+
+                    const currentTime = this.signalGenerator.getCurrentTime();
+                    if (Math.floor(currentTime * 20) % 5 === 0) {
+                        this.updateStatistics();
+                    }
+
+                } catch (error) {
+                    console.error('애니메이션 오류:', error);
+                    this.stop();
+                }
+
+                this.animationId = requestAnimationFrame(() => this.animate());
+            }
+
+            updateStatistics() {
+                try {
+                    const originalStats = this.originalVisualizer.getStatistics();
+                    const filteredStats = this.filteredVisualizer.getStatistics();
+
+                    this.statistics.originalRMS = originalStats.rms;
+                    this.statistics.filteredRMS = filteredStats.rms;
+                    
+                    // 노이즈 제거 효과 계산
+                    if (originalStats.std > 0) {
+                        const reduction = Math.max(0, 1 - (filteredStats.std / originalStats.std)) * 100;
+                        this.statistics.noiseReduction = isNaN(reduction) ? 0 : reduction;
+                    }
+
+                    // 신호 부드러움 계산 (변동성 감소 정도)
+                    if (originalStats.rms > 0) {
+                        const smoothness = Math.max(0, 1 - (filteredStats.rms / originalStats.rms)) * 100;
+                        this.statistics.smoothness = isNaN(smoothness) ? 0 : Math.min(100, smoothness * 2);
+                    }
+
+                    this.updateStatisticsUI();
+                } catch (error) {
+                    console.error('통계 계산 오류:', error);
+                }
+            }
+
+            updateStatisticsUI() {
+                const elements = {
+                    'noise-reduction': this.statistics.noiseReduction.toFixed(0) + '%',
+                    'smoothness-level': this.statistics.smoothness.toFixed(0) + '%',
+                    'current-time': this.signalGenerator.getCurrentTime().toFixed(1) + ' 초'
+                };
+
+                Object.entries(elements).forEach(([id, value]) => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.textContent = value;
+                    }
+                });
+            }
+
+            switchFilter(filterType) {
+                // 지원되는 필터 체크
+                const supportedFilters = ['moving-average', 'lowpass', 'highpass', 'kalman'];
+                if (!supportedFilters.includes(filterType)) {
+                    alert('해당 필터는 아직 구현되지 않았습니다.');
+                    return;
+                }
+
+                // 탭 UI 업데이트
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                document.querySelector(`[data-filter="${filterType}"]`).classList.add('active');
+
+                // 필터 전환
+                this.currentFilter = filterType;
+                this.createFilter();
+                
+                // 필터별 UI 업데이트
+                this.updateFilterControls();
+                
+                console.log(`🔧 필터 전환: ${filterType}`);
+            }
+
+            updateFilterControls() {
+                const controlsSection = document.getElementById('filter-controls');
+                
+                if (this.currentFilter === 'moving-average') {
+                    controlsSection.innerHTML = `
+                        <h3>⚙️ 이동평균 필터</h3>
+                        <div class="control-group">
+                            <label>윈도우 크기</label>
+                            <div class="slider-container">
+                                <input type="range" id="window-size" min="3" max="50" value="${this.settings.windowSize}" step="1">
+                                <div class="value-display" id="window-value">${this.settings.windowSize}</div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // 이벤트 리스너 재등록
+                    this.getElementById('window-size').addEventListener('input', (e) => {
+                        this.settings.windowSize = parseInt(e.target.value);
+                        this.updateValueDisplay('window-value', e.target.value);
+                        if (this.filter) {
+                            this.filter.setWindowSize(this.settings.windowSize);
+                        }
+                    });
+                    
+                } else if (this.currentFilter === 'lowpass') {
+                    controlsSection.innerHTML = `
+                        <h3>⚙️ 로우패스 필터</h3>
+                        <div class="control-group">
+                            <label>컷오프 주파수 (Hz)</label>
+                            <div class="slider-container">
+                                <input type="range" id="cutoff-frequency" min="1" max="25" value="${this.settings.cutoffFrequency}" step="0.5">
+                                <div class="value-display" id="cutoff-value">${this.settings.cutoffFrequency}</div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // 이벤트 리스너 재등록
+                    this.getElementById('cutoff-frequency').addEventListener('input', (e) => {
+                        this.settings.cutoffFrequency = parseFloat(e.target.value);
+                        this.updateValueDisplay('cutoff-value', e.target.value);
+                        if (this.filter) {
+                            this.filter.setCutoffFrequency(this.settings.cutoffFrequency);
+                        }
+                    });
+                    
+                } else if (this.currentFilter === 'highpass') {
+                    controlsSection.innerHTML = `
+                        <h3>⚙️ 하이패스 필터</h3>
+                        <div class="control-group">
+                            <label>컷오프 주파수 (Hz)</label>
+                            <div class="slider-container">
+                                <input type="range" id="cutoff-frequency" min="0.5" max="10" value="${this.settings.cutoffFrequency}" step="0.1">
+                                <div class="value-display" id="cutoff-value">${this.settings.cutoffFrequency}</div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // 이벤트 리스너 재등록
+                    this.getElementById('cutoff-frequency').addEventListener('input', (e) => {
+                        this.settings.cutoffFrequency = parseFloat(e.target.value);
+                        this.updateValueDisplay('cutoff-value', e.target.value);
+                        if (this.filter) {
+                            this.filter.setCutoffFrequency(this.settings.cutoffFrequency);
+                        }
+                    });
+                    
+                } else if (this.currentFilter === 'kalman') {
+                    controlsSection.innerHTML = `
+                        <h3>⚙️ 칼만 필터</h3>
+                        <div class="control-group">
+                            <label>프로세스 노이즈</label>
+                            <div class="slider-container">
+                                <input type="range" id="process-noise" min="0.001" max="0.1" value="${this.settings.processNoise}" step="0.001">
+                                <div class="value-display" id="process-value">${this.settings.processNoise.toFixed(3)}</div>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <label>측정 노이즈</label>
+                            <div class="slider-container">
+                                <input type="range" id="measurement-noise" min="0.01" max="1.0" value="${this.settings.measurementNoise}" step="0.01">
+                                <div class="value-display" id="measurement-value">${this.settings.measurementNoise.toFixed(2)}</div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // 이벤트 리스너 재등록
+                    this.getElementById('process-noise').addEventListener('input', (e) => {
+                        this.settings.processNoise = parseFloat(e.target.value);
+                        this.updateValueDisplay('process-value', parseFloat(e.target.value).toFixed(3));
+                        if (this.filter) {
+                            this.filter.setProcessNoise(this.settings.processNoise);
+                        }
+                    });
+                    
+                    this.getElementById('measurement-noise').addEventListener('input', (e) => {
+                        this.settings.measurementNoise = parseFloat(e.target.value);
+                        this.updateValueDisplay('measurement-value', parseFloat(e.target.value).toFixed(2));
+                        if (this.filter) {
+                            this.filter.setMeasurementNoise(this.settings.measurementNoise);
+                        }
+                    });
+                }
+            }
+
+            updateUI() {
+                this.updateValueDisplay('frequency-value', this.settings.frequency);
+                this.updateValueDisplay('amplitude-value', this.settings.amplitude);
+                this.updateValueDisplay('noise-value', this.settings.noiseLevel);
+                this.updateValueDisplay('window-value', this.settings.windowSize);
+                this.updateValueDisplay('cutoff-value', this.settings.cutoffFrequency);
+                this.updateValueDisplay('process-value', this.settings.processNoise.toFixed(3));
+                this.updateValueDisplay('measurement-value', this.settings.measurementNoise.toFixed(2));
+                this.updateValueDisplay('speed-value', this.settings.speed + 'x');
+                
+                this.updateStatisticsUI();
+                this.updateFilterControls();
+                
+                console.log('🎨 UI 초기화 완료');
+            }
+        }
+
+        // 애플리케이션 시작
+        let app;
+        setTimeout(() => {
+            try {
+                app = new FilterVisualizerApp();
+                window.filterApp = app;
+            } catch (error) {
+                console.error('❌ 애플리케이션 시작 실패:', error);
+            }
+        }, 100);
+
+        // 창 크기 변경 대응
+        window.addEventListener('resize', () => {
+            if (window.originalVisualizer) {
+                window.originalVisualizer.resize();
+            }
+            if (window.filteredVisualizer) {
+                window.filteredVisualizer.resize();
+            }
+        });
+
+        // 페이지 언로드 시 정리
+        window.addEventListener('beforeunload', () => {
+            if (app) {
+                app.stop();
+            }
+        });
+    </script>
+</body>
+</html>
